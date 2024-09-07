@@ -1,0 +1,126 @@
+<div class="container-fluid">
+    <form action="" id="activity_rules-form">
+        <input type="hidden" name="id" value="{% if activity_rules.pk %}{{activity_rules.pk}}{% endif %}">
+        <div class="form-group mb-3">
+            <label for="name" class="control-label">Activity Rules</label>
+            <input type="text" name="name" id="name" class="form-control form-control-sm rounded-0"
+                value="{% if activity_rules.name %}{{activity_rules.name}}{% endif %}" required>
+        </div>
+        <div class="form-group mb-3">
+            <label for="points" class="control-label">Points</label>
+            <textarea rows="1" name="points" id="points" class="form-control form-control-sm rounded-0"
+                required>{% if activity_rules.points %}{{activity_rules.points}}{% endif %}</textarea>
+        </div>
+
+      
+        <!--  -->
+
+        <div class="col-md-6">
+            <div class="form-group mb-3">
+                <label for="activity_id" class="control-label">Activity-id</label>
+                <select name="activity_id" id="activity_id" class="form-select form-select-sm rounded-0" required>
+                    {% if not activity_rules.activity_id %}
+                    <option value="1" disabled selected>Please Select Here</option>
+                    {% else %}
+                    <option value="1" disabled>Please Select Here</option>
+                    {% endif %}
+                    {% for activityr in activity %}
+                        {% if activity_rules.activity_id and activity_rules.activity_id == activityr.id %}
+                        <option value="{{ activityr.id }}" selected>{{ activityr.name }}</option>
+                        {% else %}
+                        <option value="{{ activityr.id }}">{{ activityr.name }}</option>
+                        {% endif %}
+                    {% endfor %}
+
+                </select>
+            </div>
+            
+        <!--  -->
+        <div class="form-group mb-3">
+            <label for="points" class="control-label">Minimum Score</label>
+            <textarea rows="1" name="min_score" id="min_score" class="form-control form-control-sm rounded-0"
+                required>{% if activity_rules.min_score %}{{activity_rules.min_score}}{% endif %}</textarea>
+        </div>
+
+        <div class="form-group mb-3">
+            <label for="points" class="control-label">Maximum Score</label>
+            <textarea rows="1" name="max_score" id="max_score" class="form-control form-control-sm rounded-0"
+                required>{% if activity_rules.max_score %}{{activity_rules.max_score}}{% endif %}</textarea>
+        </div>
+
+        <div class="form-group mb-3">
+            <label for="operator" class="control-label">Operator</label>
+            <input type="text" name="operator" id="operator" class="form-control form-control-sm rounded-0"
+                value="{% if activity_rules.operator %}{{activity_rules.operator}}{% endif %}" required>
+        </div>
+
+
+        <div class="form-group mb-3">
+            <label for="status" class="control-label">Status</label>
+            <select name="status" id="status" class="form-control form-control-sm rounded-0" required>
+                {% if activity_rules.status and activity_rules.status == 1 %}
+                <option value="1" selected>Active</option>
+                {% else %}
+                <option value="1">Active</option>
+                {% endif %}
+
+                {% if activity_rules.status and activity_rules.status == 0 %}
+                <option value="0" selected>Inactive</option>
+                {% else %}
+                <option value="0">Inactive</option>
+                {% endif %}
+            </select>
+        </div>
+    </form>
+</div>
+<script>
+    $(function () {
+        $('#activity_rules-form').submit(function (e) {
+            e.preventDefault();
+            var _this = $(this)
+            $('.err-msg').remove();
+            var el = $('<div>')
+            el.addClass("alert alert-danger err-msg")
+            el.hide()
+            if (_this[0].checkValidity() == false) {
+                _this[0].reportValidity();
+                return false;
+            }
+            start_loader();
+            $.ajax({
+                headers: {
+                    "X-CSRFToken": '{{csrf_token}}'
+                },
+                url: "{% url 'save-activity_rules-page' %}",
+                data: new FormData($(this)[0]),
+                cache: false,
+                contentType: false,
+                processData: false,
+                method: 'POST',
+                type: 'POST',
+                dataType: 'json',
+                error: err => {
+                    console.log(err)
+                    alert_toast("An error occured", 'error');
+                    end_loader();
+                },
+                success: function (resp) {
+                    if (typeof resp == 'object' && resp.status == 'success') {
+                        el.removeClass("alert alert-danger err-msg")
+                        location.reload()
+                    } else if (resp.status == 'failed' && !!resp.msg) {
+                        el.text(resp.msg)
+                    } else {
+                        el.text("An error occured", 'error');
+                        end_loader();
+                        console.err(resp)
+                    }
+                    _this.prepend(el)
+                    el.show('slow')
+                    $("html, body, .modal").scrollTop(0);
+                    end_loader()
+                }
+            })
+        })
+    })
+</script>
